@@ -51,10 +51,8 @@ if __name__ == '__main__':
     # get functionals
     ##################
     datadir = '/home/jagust/graph/data/spm_220'
-    #datadir = '/home/jagust/UCSF/Manja_Lehmann/ICN/data'
     functionals = pp.get_files(datadir,'B*/func/B*_4d.nii*')
     TR = 2.2 #set to TR = None if TR in file is correct
-    #templatedir = '/home/jagust/UCSF/Manja_Lehmann/ICN/data/template'
     templatedir  = '/home/jagust/graph/data/spm_220/template'
     ##### CHANGE TEMPLATE HERE!!  ############
     template_name = 'dartel_Dec_04_2012_16_58_6.nii'
