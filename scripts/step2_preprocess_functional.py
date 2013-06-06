@@ -67,10 +67,11 @@ if __name__ == '__main__':
         pth, nme, ext = pp.split_filename(func)
         subid = nme.split('_4d')[0]
         realigndir,exists = pp.make_dir(pth, 'realign_unwarp')
-        cfunc = pp.copy_file(func, realigndir)
-        slicetime_vars = pp.get_slicetime_vars(cfunc, TR = TR)
+        slicetime_vars = pp.get_slicetime_vars(func, TR = TR)
+
         if not exists: # only run if realign_unwarp directory is missing
-            
+            cfunc = pp.copy_file(func, realigndir)
+                       
             if pp.is_4d(cfunc):
                 # convert to list of 3d files
                 cfuncs = pp.fsl_split4d(cfunc, subid)
@@ -87,52 +88,54 @@ if __name__ == '__main__':
             mean, ruw_funcs, paramfile = pp.get_realigned_unwarped(realigndir)
 
         ## slice time
-        # copy file to processing dir
-        slicetimedir,exists = pp.make_dir(pth, 'slicetime')
-        cfunc = pp.copy_files(ruw_funcs, slicetimedir)
+        slicetimedir, exists = pp.make_dir(pth, 'slicetime')
         if not exists:
+            cfunc = pp.copy_files(ruw_funcs, slicetimedir)
+            # copy file to processing dir
             cfuncs = pp.spm_slicetime(cfunc,
                                       matlab_cmd='matlab-spm8',
                                       stdict = slicetime_vars)
             pp.remove_files(cfunc)
 
         slicetimed = pp.get_slicetimed(slicetimedir)
+        
         ## coreg
-        coregdir,exists = pp.make_dir(pth, 'coreg')
-        cmean = pp.copy_file(mean, coregdir)
-        cslicetimed = pp.copy_files(slicetimed, coregdir)
-        anatdir = pth.replace('func', 'anat')
-        target = pp.get_files(anatdir, 'ss*')
+        coregdir, exists = pp.make_dir(pth, 'coreg')
         if not exists:
-            
+            cmean = pp.copy_file(mean, coregdir)
+            cslicetimed = pp.copy_files(slicetimed, coregdir)
+            anatdir = pth.replace('func', 'anat')
+            target = pp.get_files(anatdir, 'ss*')
             coreg_mean,coreg_files = pp.spm_coregister(cmean, target[0],
                                                        apply_to_files = cslicetimed)
-        pp.remove_files(cmean)
-        pp.remove_files(cslicetimed)
+            pp.remove_files(cmean)
+            pp.remove_files(cslicetimed)
         coreg_files = pp.get_coreg_files(coregdir)
+        
         ## dartel norm
         tmp_tmplt_nme = '_'.join(template_name.split('_')[1:6])
         d2mnidir, exists = pp.make_dir(pth,
                                        'dartel_to_MNI_%s'%(tmp_tmplt_nme))
-        ccoreg = pp.copy_files(coreg_files, d2mnidir)
-        canat = pp.copy_file(target[0],d2mnidir)
-        flowfield = pp.get_files(anatdir, 'dartel/u_rp*%s*'%tmp_tmplt_nme)
         if not exists:
             #warp anat
+            ccoreg = pp.copy_files(coreg_files, d2mnidir)
+            canat = pp.copy_file(target[0],d2mnidir)
+            flowfield = pp.get_files(anatdir, 'dartel/u_rp*%s*'%tmp_tmplt_nme)
+
             normd_anat = pp.spm_dartel_to_mni([canat], flowfield[0],template)
             # warp functionals
             flowfields = flowfield * len(ccoreg)
             normd_func = pp.spm_dartel_to_mni(ccoreg, flowfields, template)
-        pp.remove_files(canat)
-        pp.remove_files(ccoreg)
+            pp.remove_files(canat)
+            pp.remove_files(ccoreg)
         warped = pp.get_warpedfunc(d2mnidir)
         # bandpass filter
         bandpassdir, exists = pp.make_dir(pth, 'bandpass_%s'%(tmp_tmplt_nme))
-        cwarped = pp.copy_files(warped, bandpassdir)
         if not exists:
+            cwarped = pp.copy_files(warped, bandpassdir)
             file4d = pp.fsl_make4d(cwarped)
             nanfile4d = pp.clean_nan(file4d)
             filtered = pp.fsl_bandpass(nanfile4d, TR)
             pp.remove_files(file4d)
             pp.remove_files(nanfile4d)
-        pp.remove_files(cwarped)
+            pp.remove_files(cwarped)
