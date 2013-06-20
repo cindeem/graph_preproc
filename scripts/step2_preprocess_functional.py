@@ -55,7 +55,7 @@ if __name__ == '__main__':
     TR = 2.2 #set to TR = None if TR in file is correct
     templatedir  = '/home/jagust/graph/data/spm_220/template'
     ##### CHANGE TEMPLATE HERE!!  ############
-    template_name = 'dartel_Dec_04_2012_16_58_6.nii'
+    template_name = 'dartel_May_21_2013_14_27_6.nii'
     #################################################
     template = pp.os.path.join(templatedir,template_name)
 
@@ -101,11 +101,12 @@ if __name__ == '__main__':
         
         ## coreg
         coregdir, exists = pp.make_dir(pth, 'coreg')
+        anatdir = pth.replace('func', 'anat')
+        target = pp.get_files(anatdir, 'ss*')
         if not exists:
             cmean = pp.copy_file(mean, coregdir)
             cslicetimed = pp.copy_files(slicetimed, coregdir)
-            anatdir = pth.replace('func', 'anat')
-            target = pp.get_files(anatdir, 'ss*')
+
             coreg_mean,coreg_files = pp.spm_coregister(cmean, target[0],
                                                        apply_to_files = cslicetimed)
             pp.remove_files(cmean)
